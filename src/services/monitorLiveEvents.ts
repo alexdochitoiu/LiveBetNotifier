@@ -72,33 +72,35 @@ export default async function monitorLiveEvents() {
   const eventsStats = await saveEventsStats();
   console.log(eventsStats);
   const users = await User.find({ active: true }).exec();
-  users.map(async (u) => {
-    const notified = (
-      await Promise.all(
-        eventsStats.map(async (e) => {
-          if (u.subscription && checkAlert(e, u.alerts)) {
-            const payload = {
-              url: `https://www.flashscore.com/match/${e.matchInfo.id}/#/match-summary/match-statistics/0`,
-              title: `Match: ${e.matchInfo.homeTeam} - ${e.matchInfo.awayTeam}`,
-              body: `Live bet alert: ${e.matchInfo.status}' (${e.matchInfo.liveScore})`,
-            };
-            if (u.notified.indexOf(e.matchInfo.id) === -1) {
-              const result = await webpush.sendNotification(
-                u.subscription,
-                JSON.stringify(payload)
-              );
-              if (result.statusCode == 201) {
-                return e.matchInfo.id;
+  await Promise.all(
+    users.map(async (u) => {
+      const notified = (
+        await Promise.all(
+          eventsStats.map(async (e) => {
+            if (u.subscription && checkAlert(e, u.alerts)) {
+              const payload = {
+                url: `https://www.flashscore.com/match/${e.matchInfo.id}/#/match-summary/match-statistics/0`,
+                title: `Match: ${e.matchInfo.homeTeam} - ${e.matchInfo.awayTeam}`,
+                body: `Live bet alert: ${e.matchInfo.status}' (${e.matchInfo.liveScore})`,
+              };
+              if (u.notified.indexOf(e.matchInfo.id) === -1) {
+                const result = await webpush.sendNotification(
+                  u.subscription,
+                  JSON.stringify(payload)
+                );
+                if (result.statusCode == 201) {
+                  return e.matchInfo.id;
+                }
               }
             }
-          }
-        })
-      )
-    ).filter((n) => Boolean(n));
-    console.log(notified);
-    await User.updateOne(
-      { username: u.username },
-      { notified: [...u.notified, ...notified] }
-    );
-  });
+          })
+        )
+      ).filter((n) => Boolean(n));
+      await User.updateOne(
+        { username: u.username },
+        { notified: [...u.notified, ...notified] }
+      );
+    })
+  );
+  await monitorLiveEvents();
 }
