@@ -16,7 +16,6 @@ export interface IEventsStats {
 
 export default async function saveEventsStats(): Promise<IEventsStats[]> {
   const browser = await puppeteer.launch({
-    headless: false,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
