@@ -30,7 +30,8 @@ app.post("/notifications/subscribe", subscribe);
 app.post("/set-alerts", setAlerts);
 app.post("/toggle-alerts-active", toggleAlertsActive);
 
-app.listen(9000, () => {
-  console.log("Server listening in port 9000 ...");
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+  console.log(`[SERVER]: API started on port ${port} ...`);
   setInterval(monitorLiveEvents, 30 * 1000);
 });

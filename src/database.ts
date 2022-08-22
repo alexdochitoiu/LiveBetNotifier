@@ -5,7 +5,7 @@ function connect() {
   return mongoose
     .connect(mongoUri)
     .then(() => {
-      console.info("Mongo database connected!");
+      console.info("[DATABASE]: Mongo database connected!");
     })
     .catch((error) => {
       console.error(error);
