@@ -45,13 +45,19 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
         const [homeValue, awayValue] = event.stats[a.category].map((x) =>
           parseInt(x)
         );
-        console.log(homeValue);
         const userValue = parseInt(a.value);
+        // console.log(
+        //   `${event.matchInfo.homeTeam} - ${event.matchInfo.awayTeam}`,
+        //   a.category,
+        //   homeValue,
+        //   awayValue,
+        //   userValue
+        // );
         if (a.team === "Any") {
           if (a.type === "Under or Equal") {
             return homeValue <= userValue || awayValue <= userValue;
           } else {
-            return homeValue > userValue || awayValue <= userValue;
+            return homeValue > userValue || awayValue > userValue;
           }
         }
         const value = a.team === "Home Team" ? homeValue : awayValue;
