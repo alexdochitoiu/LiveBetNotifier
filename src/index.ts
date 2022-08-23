@@ -7,6 +7,7 @@ import { setAlerts, toggleAlertsActive } from "./controllers/alerts";
 import { subscribe } from "./controllers/subscribe";
 import { getUser, login } from "./controllers/user";
 import * as database from "./database";
+import keepDynoAwake from "./keepDynoAwake";
 import monitorLiveEvents from "./services/monitorLiveEvents";
 
 const app = express();
@@ -34,4 +35,5 @@ const port = process.env.PORT || 9000;
 app.listen(port, () => {
   console.log(`[SERVER]: API started on port ${port} ...`);
   monitorLiveEvents();
+  keepDynoAwake();
 });
