@@ -4,7 +4,7 @@ import { PushSubscription } from "web-push";
 export interface IAlert {
   category: string;
   team?: string;
-  type: "Over" | "Under or Equal";
+  type: "Over" | "Under";
   value: string;
 }
 

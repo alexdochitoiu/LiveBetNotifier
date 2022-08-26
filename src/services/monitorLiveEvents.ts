@@ -3,6 +3,9 @@ import User, { IAlert } from "../models/user";
 import saveEventsStats, { IEventsStats } from "./saveEventsStats";
 
 const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
+  if (userAlerts.length === 0) {
+    return false;
+  }
   const validStats = userAlerts.map((a) => {
     if (a.category === "Minute") {
       const minute =
@@ -10,10 +13,10 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
           ? 45
           : parseInt(event.matchInfo.status);
       const userMinute = parseInt(a.value);
-      if (a.type === "Under or Equal") {
+      if (a.type === "Under") {
         return minute <= userMinute;
       } else {
-        return minute > userMinute;
+        return minute >= userMinute;
       }
     } else if (a.category === "Goals") {
       const [home, away] = event.matchInfo.liveScore
@@ -21,23 +24,23 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
         .map((s) => parseInt(s));
 
       const userGoals = parseInt(a.value);
-      if (!a.team || a.team === "Any") {
-        if (a.type === "Under or Equal") {
+      if (!a.team || a.team === "Any" || a.team === "Total") {
+        if (a.type === "Under") {
           return home + away <= userGoals;
         } else {
-          return home + away > userGoals;
+          return home + away >= userGoals;
         }
       } else if (a.team === "Home Team") {
-        if (a.type === "Under or Equal") {
+        if (a.type === "Under") {
           return home <= userGoals;
         } else {
-          return home > userGoals;
+          return home >= userGoals;
         }
       } else {
-        if (a.type === "Under or Equal") {
+        if (a.type === "Under") {
           return away <= userGoals;
         } else {
-          return away > userGoals;
+          return away >= userGoals;
         }
       }
     } else {
@@ -54,17 +57,24 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
         //   userValue
         // );
         if (a.team === "Any") {
-          if (a.type === "Under or Equal") {
+          if (a.type === "Under") {
             return homeValue <= userValue || awayValue <= userValue;
           } else {
-            return homeValue > userValue || awayValue > userValue;
+            return homeValue >= userValue || awayValue >= userValue;
           }
-        }
-        const value = a.team === "Home Team" ? homeValue : awayValue;
-        if (a.type === "Under or Equal") {
-          return value <= userValue;
+        } else if (a.team === "Total") {
+          if (a.type === "Under") {
+            return homeValue + awayValue <= userValue;
+          } else {
+            return homeValue + awayValue >= userValue;
+          }
         } else {
-          return value > userValue;
+          const value = a.team === "Home Team" ? homeValue : awayValue;
+          if (a.type === "Under") {
+            return value <= userValue;
+          } else {
+            return value >= userValue;
+          }
         }
       }
       return false;
