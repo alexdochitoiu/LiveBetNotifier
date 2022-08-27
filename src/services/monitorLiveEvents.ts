@@ -28,7 +28,8 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
         return hg < ag;
       } else return hg === ag;
     } else {
-      let homeValue, awayValue;
+      let homeValue = -1,
+        awayValue = -1;
       if (a.category === "Goals") {
         [homeValue, awayValue] = event.matchInfo.liveScore
           .split(" - ")
@@ -38,7 +39,7 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
           parseInt(x)
         );
       }
-      if (!homeValue || !awayValue) {
+      if (homeValue === -1 && awayValue === -1) {
         return false;
       }
       const userValue = parseInt(a.value);
