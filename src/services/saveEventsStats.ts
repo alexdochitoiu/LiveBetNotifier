@@ -1,5 +1,7 @@
 import puppeteer from "puppeteer";
+import User from "../models/user";
 import { querySelector } from "../utils";
+import sendNotification from "./sendNotification";
 
 const url = "https://www.flashscore.com/";
 
@@ -18,7 +20,7 @@ export default async function saveEventsStats(): Promise<IEventsStats[]> {
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-  const page = await browser.newPage();
+  let page = await browser.newPage();
   await page.goto(url, { waitUntil: "networkidle2", timeout: 0 });
   await page.waitForSelector("div.leagues--live", {
     visible: true,
@@ -77,7 +79,10 @@ export default async function saveEventsStats(): Promise<IEventsStats[]> {
       };
     })
     .filter((e) => e.matchInfo.status !== "Finished");
+  console.log(`[INFO]: Extracted ${events.length + 1} matches`);
+  await page.close();
   for (const event of events) {
+    page = await browser.newPage();
     const matchStatisticsUrl = `https://www.flashscore.com/match/${event.matchInfo.id}/#/match-summary/match-statistics/0`;
     await page.goto(matchStatisticsUrl, {
       waitUntil: "networkidle2",
@@ -115,7 +120,16 @@ export default async function saveEventsStats(): Promise<IEventsStats[]> {
           }),
         {}
       );
+      if (Object.entries(event.stats).length > 0) {
+        const users = await User.find({
+          active: true,
+        }).exec();
+        await Promise.all(
+          users.map(async (u) => await sendNotification(event, u))
+        );
+      }
     }
+    await page.close();
   }
   await browser.close();
   return events.filter((e) => Object.entries(e.stats).length > 0);
