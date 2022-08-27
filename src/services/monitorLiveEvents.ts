@@ -18,66 +18,47 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
       } else {
         return minute >= userMinute;
       }
-    } else if (a.category === "Goals") {
-      const [home, away] = event.matchInfo.liveScore
+    } else if (a.category === "Score") {
+      const [hg, ag] = event.matchInfo.liveScore
         .split(" - ")
         .map((s) => parseInt(s));
-
-      const userGoals = parseInt(a.value);
-      if (!a.team || a.team === "Any" || a.team === "Total") {
-        if (a.type === "Under") {
-          return home + away <= userGoals;
-        } else {
-          return home + away >= userGoals;
-        }
-      } else if (a.team === "Home Team") {
-        if (a.type === "Under") {
-          return home <= userGoals;
-        } else {
-          return home >= userGoals;
-        }
+      if (a.type === "Home Team Leads") {
+        return hg > ag;
+      } else if (a.type === "Away Team Leads") {
+        return hg < ag;
+      } else return hg === ag;
+    } else if (event.stats[a.category]) {
+      let homeValue, awayValue;
+      if (a.category === "Goals") {
+        [homeValue, awayValue] = event.matchInfo.liveScore
+          .split(" - ")
+          .map((s) => parseInt(s));
       } else {
-        if (a.type === "Under") {
-          return away <= userGoals;
-        } else {
-          return away >= userGoals;
-        }
-      }
-    } else {
-      if (event.stats[a.category]) {
-        const [homeValue, awayValue] = event.stats[a.category].map((x) =>
+        [homeValue, awayValue] = event.stats[a.category].map((x) =>
           parseInt(x)
         );
-        const userValue = parseInt(a.value);
-        // console.log(
-        //   `${event.matchInfo.homeTeam} - ${event.matchInfo.awayTeam}`,
-        //   a.category,
-        //   homeValue,
-        //   awayValue,
-        //   userValue
-        // );
-        if (a.team === "Any") {
-          if (a.type === "Under") {
-            return homeValue <= userValue || awayValue <= userValue;
-          } else {
-            return homeValue >= userValue || awayValue >= userValue;
-          }
-        } else if (a.team === "Total") {
-          if (a.type === "Under") {
-            return homeValue + awayValue <= userValue;
-          } else {
-            return homeValue + awayValue >= userValue;
-          }
+      }
+      const userValue = parseInt(a.value);
+      if (a.team === "Any") {
+        if (a.type === "Under") {
+          return homeValue <= userValue || awayValue <= userValue;
         } else {
-          const value = a.team === "Home Team" ? homeValue : awayValue;
-          if (a.type === "Under") {
-            return value <= userValue;
-          } else {
-            return value >= userValue;
-          }
+          return homeValue >= userValue || awayValue >= userValue;
+        }
+      } else if (a.team === "Total") {
+        if (a.type === "Under") {
+          return homeValue + awayValue <= userValue;
+        } else {
+          return homeValue + awayValue >= userValue;
+        }
+      } else {
+        const value = a.team === "Home Team" ? homeValue : awayValue;
+        if (a.type === "Under") {
+          return value <= userValue;
+        } else {
+          return value >= userValue;
         }
       }
-      return false;
     }
   });
   return validStats.reduce((curr, acc) => curr && acc, true);
@@ -89,7 +70,9 @@ export default async function monitorLiveEvents() {
     console.log("Monitoring live matches ... ");
     const eventsStats = await saveEventsStats();
     console.log(eventsStats);
-    const users = await User.find({ active: true }).exec();
+    const users = await User.find({
+      active: true,
+    }).exec();
     await Promise.all(
       users.map(async (u) => {
         const notified = (
