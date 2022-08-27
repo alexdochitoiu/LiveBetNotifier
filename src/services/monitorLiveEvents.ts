@@ -27,16 +27,19 @@ const checkAlert = (event: IEventsStats, userAlerts: IAlert[]) => {
       } else if (a.type === "Away Team Leads") {
         return hg < ag;
       } else return hg === ag;
-    } else if (event.stats[a.category]) {
+    } else {
       let homeValue, awayValue;
       if (a.category === "Goals") {
         [homeValue, awayValue] = event.matchInfo.liveScore
           .split(" - ")
           .map((s) => parseInt(s));
-      } else {
+      } else if (event.stats[a.category]) {
         [homeValue, awayValue] = event.stats[a.category].map((x) =>
           parseInt(x)
         );
+      }
+      if (!homeValue || !awayValue) {
+        return false;
       }
       const userValue = parseInt(a.value);
       if (a.team === "Any") {
